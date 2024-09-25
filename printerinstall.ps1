@@ -29,3 +29,7 @@ Add-PrinterPort -Name $portName -PrinterHostAddress $printerIPAddress
 
 # Add the printer
 Add-Printer -DriverName $driverName -Name $printerName -PortName $portName
+
+Remove-Item "$downloadPath\$zipFileName" -Recurse
+
+Remove-Item "$downloadPath\$extractFolderName" -Recurse
