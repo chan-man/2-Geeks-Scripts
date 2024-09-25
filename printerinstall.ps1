@@ -1,20 +1,39 @@
-#Create folder for files to be downloaded in.
-New-Item -Path "C:\2Geeks" -ItemType Directory
+# Variables for customization
+$downloadLink = "https://download.support.xerox.com/pub/drivers/GLOBALPRINTDRIVER/drivers/win10x64/ar/UNIV_5.1009.1.0_PCL6_x64.zip"
+$downloadPath = "C:\2Geeks"
+$zipFileName = "UNIV_5.1009.1.0_PCL6_x64.zip"
+$extractFolderName = "UNIV_5.1009.1.0_PCL6_x64"
+$infFileName = "x3UNIVX.inf"
+$driverName = "Xerox Global Print Driver PCL6"
+# Driver location is the name of the folder in the File Repository where the driver INF file is located.
+$driverLocation = "x3univx.inf_amd64_da1d17edb334b897"
+$printerName = "Xerox Printer"
+$portName = "Copier_IP"
+$printerIPAddress = "192.168.100.50"
 
-#Download the file in the link below and save to the directory below.
-curl "https://download.support.xerox.com/pub/drivers/ALC80XX/drivers/win10x64/ar/AltaLinkC80xx_7.76.0.0_PCL6_x64.zip" -o "c:\2Geeks\AltaLinkC80xx_7.76.0.0_PCL6_x64.zip"
+# Create a folder for the files to be downloaded
+New-Item -Path $downloadPath -ItemType Directory
 
-#unzip the saved .zip file.
-expand-archive -Path "c:\2Geeks\AltaLinkC80xx_7.76.0.0_PCL6_x64.zip" -DestinationPath "c:\2Geeks\AltaLinkC80xx_7.76.0.0_PCL6_x64"
+# Download the file and save it to the directory
+curl $downloadLink -o "$downloadPath\$zipFileName"
 
-#Add printer driver .inf file to driver store.
-pnputil /add-driver "C:\2Geeks\AltaLinkC80xx_7.76.0.0_PCL6_x64\XeroxAltaLinkC80xx_PCL6.inf"
+# Unzip the saved .zip file
+Expand-Archive -Path "$downloadPath\$zipFileName" -DestinationPath "$downloadPath\$extractFolderName"
 
-#Add printer driver to computer but replace with your own .inf file name.
-add-printerdriver -name "Xerox AltaLink C8035 V4 PCL6" -infpath "C:\Windows\System32\DriverStore\FileRepository\xeroxaltalinkc80xx_pcl6.inf_amd64_1b1bf3ecbf8bc7c5\XeroxAltaLinkC80xx_PCL6.inf
+# Add the printer driver .inf file to the driver store
+pnputil /add-driver "$downloadPath\$extractFolderName\$infFileName" /subdirs
 
-#Add ports to computer but change the port name and port ip address to your own.
-Add-PrinterPort -Name "Copier_IP" -PrinterHostAddress "10.0.1.9"
+# Add the printer driver to the computer
+Add-PrinterDriver -Name $driverName -InfPath "C:\Windows\System32\DriverStore\FileRepository\$driverLocation\$infFileName"
 
-#Final step to add printer but change name to what you want the printer named and use the port name created in the last step.
-Add-Printer -DriverName "Xerox AltaLink C8035 V4 PCL6" -Name "Xerox Printer" -PortName "Copier_IP"
+# Add a port to the computer
+Add-PrinterPort -Name $portName -PrinterHostAddress $printerIPAddress
+
+# Add the printer
+Add-Printer -DriverName $driverName -Name $printerName -PortName $portName
+
+# Remove the Zip file downloaded
+Remove-Item "$downloadPath\$zipFileName" -Recurse
+
+# Remove the extracted folder downloaded
+Remove-Item "$downloadPath\$extractFolderName" -Recurse
