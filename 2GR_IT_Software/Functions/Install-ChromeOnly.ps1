@@ -1,51 +1,27 @@
-param (
-    [System.Windows.Controls.TextBox]$LogBox,
-    [System.Windows.Controls.ProgressBar]$ProgressBar
-)
+function Install-ChromeOnly {
+    param (
+        [System.Windows.Forms.ProgressBar]$ProgressBar,
+        [System.Windows.Forms.TextBox]$LogBox
+    )
 
-function Write-Log {
-    param($Message)
-    $LogBox.Dispatcher.Invoke([action]{
-        $LogBox.AppendText("[$(Get-Date -Format 'HH:mm:ss')] $Message`n")
-        $LogBox.ScrollToEnd()
-    })
-}
+    $ProgressBar.Value = 10
+    $LogBox.AppendText("Starting Chrome install...`r`n")
 
-function Update-Progress {
-    param($Value)
-    $ProgressBar.Dispatcher.Invoke([action]{
-        $ProgressBar.Value = $Value
-    })
-}
+    try {
+        $chromeUrl = "https://dl.google.com/chrome/install/latest/chrome_installer.exe"
+        $chromeInstaller = "$env:TEMP\chrome_installer.exe"
 
-Write-Log "Starting Chrome installation..."
+        Invoke-WebRequest -Uri $chromeUrl -OutFile $chromeInstaller -UseBasicParsing
+        $ProgressBar.Value = 40
+        $LogBox.AppendText("Chrome installer downloaded.`r`n")
 
-try {
-    Update-Progress 10
-    Write-Log "Checking for Winget availability..."
-
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Update-Progress 25
-        Write-Log "Winget found. Installing Chrome..."
-
-        $wingetResult = Start-Process -FilePath "winget" -ArgumentList "install --id=Google.Chrome -e --accept-package-agreements --accept-source-agreements" -Wait -PassThru -NoNewWindow
-
-        if ($wingetResult.ExitCode -eq 0) {
-            Update-Progress 90
-            Write-Log "Chrome installed successfully via Winget."
-        } else {
-            Write-Log "Winget installation failed with exit code $($wingetResult.ExitCode)."
-        }
-    } else {
-        Write-Log "Winget is not available. Cannot install Chrome."
+        Start-Process -FilePath $chromeInstaller -ArgumentList "/silent /install" -Wait
+        $ProgressBar.Value = 90
+        $LogBox.AppendText("Chrome installed.`r`n")
+    } catch {
+        $LogBox.AppendText("Error: $_`r`n")
     }
-}
-catch {
-    Write-Log "An error occurred: $_"
-}
-finally {
-    Update-Progress 100
-    Write-Log "Chrome installation process complete."
-    Start-Sleep -Seconds 2
-    Update-Progress 0
+
+    $ProgressBar.Value = 100
+    $LogBox.AppendText("Chrome installation complete.`r`n")
 }
