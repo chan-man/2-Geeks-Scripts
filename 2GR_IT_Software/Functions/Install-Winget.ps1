@@ -4,31 +4,24 @@ function Install-Winget {
         [System.Windows.Forms.TextBox]$LogBox
     )
 
-    $ScriptBlock = {
-        param ($ProgressBar, $LogBox)
+    $ProgressBar.Value = 10
+    $LogBox.AppendText("Starting Winget installation...`r`n")
 
-        $LogBox.Invoke({ $_.AppendText("Starting winget installation...`r`n") })
-        $ProgressBar.Invoke({ $_.Value = 10 })
+    try {
+        $url = "https://aka.ms/getwinget"
+        $installer = "$env:TEMP\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
 
-        $wingetAppInstallerURL = "https://aka.ms/getwinget"
-        $installerPath = "$env:TEMP\Microsoft.DesktopAppInstaller_Installer.msixbundle"
+        Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
+        $ProgressBar.Value = 30
+        $LogBox.AppendText("Downloaded Winget installer.`r`n")
 
-        try {
-            $LogBox.Invoke({ $_.AppendText("Downloading App Installer bundle...`r`n") })
-            Invoke-WebRequest -Uri $wingetAppInstallerURL -OutFile $installerPath
-            $ProgressBar.Invoke({ $_.Value = 40 })
-
-            $LogBox.Invoke({ $_.AppendText("Installing App Installer...`r`n") })
-            Add-AppxPackage -Path $installerPath
-            $ProgressBar.Invoke({ $_.Value = 80 })
-
-            $LogBox.Invoke({ $_.AppendText("winget installation completed.`r`n") })
-            $ProgressBar.Invoke({ $_.Value = 100 })
-        } catch {
-            $LogBox.Invoke({ $_.AppendText("Error installing winget: $_`r`n") })
-            $ProgressBar.Invoke({ $_.Value = 0 })
-        }
+        Add-AppxPackage -Path $installer
+        $ProgressBar.Value = 70
+        $LogBox.AppendText("Winget installed/updated.`r`n")
+    } catch {
+        $LogBox.AppendText("Error: $_`r`n")
     }
 
-    Start-Job -ScriptBlock $ScriptBlock -ArgumentList $ProgressBar, $LogBox | Out-Null
+    $ProgressBar.Value = 100
+    $LogBox.AppendText("Winget installation complete.`r`n")
 }
