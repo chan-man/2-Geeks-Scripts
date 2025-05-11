@@ -1,6 +1,6 @@
 param (
-    [System.Windows.Controls.TextBox]$LogBox,
-    [System.Windows.Controls.ProgressBar]$ProgressBar
+    [System.Windows.Forms.TextBox]$LogBox,
+    [System.Windows.Forms.TextBox]$ProgressBar
 )
 
 function Write-Log {
